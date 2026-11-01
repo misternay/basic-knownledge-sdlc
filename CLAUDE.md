@@ -9,6 +9,7 @@ React 19 + Vite 8 (JSX ไม่มี TypeScript) เป็น static site บ�
 - เนื้อหาทั้งหมดเป็นไฟล์ใน `content/topics/` และถูก bundle ตอน build
 - ใช้ hash route (`#/topic/sql`) และ `base: './'` เพื่อให้ทำงานบน GitHub Pages โดยไม่ต้องตั้ง rewrite
 - UI เป็นภาษาไทย
+- ข้อยกเว้นที่ผู้ใช้ขอ: ชุดฝึก Arise (`#/arise`) ล็อกด้วยรหัสผ่าน ดูหัวข้อ "ชุดฝึก Arise" ด้านล่าง
 
 ## คำสั่ง
 ```bash
@@ -35,6 +36,12 @@ npm run build          # check:content แล้ว vite build -> dist/
 - `exam: true` ใช้กับหัวข้อมาตรฐานที่พบบ่อยในข้อสอบ/สัมภาษณ์สายนักพัฒนา ห้ามอ้างว่าเคยออกข้อสอบของที่ใดที่หนึ่งโดยไม่มีที่มา
 - regex ของแบบฝึกหัดเทียบกับคำตอบตัวพิมพ์เล็กที่ตัดคอมเมนต์แล้ว (flag `im`) เฉลยต้องผ่านทุกเกณฑ์ starter ต้องไม่ผ่านทั้งหมด
 - แก้เนื้อหาแล้วต้องรัน `npm run check:content` และ `npm test` ให้ผ่านก่อน commit
+
+## ชุดฝึก Arise
+- โจทย์ 168 ข้อจากชุดฝึกรุ่นก่อน (single/multi/order มีเหตุผลทุกตัวเลือก) พร้อมคอร์ส บทเรียน และอ้างอิง ห้ามตัดข้อหรือข้อมูลออก
+- ต้นฉบับ `private/arise/th.json`, `en.json` อยู่นอก git (`.git/info/exclude`) ห้าม commit เพราะ repo เป็น public
+- ขึ้นเว็บเฉพาะ `public/arise.enc.json` (AES-GCM + PBKDF2, `src/lib/vault.js`) แก้ต้นฉบับแล้วเข้ารหัสใหม่: `ARISE_PASSCODE='...' node scripts/encrypt-arise.mjs` ห้ามใส่รหัสลงไฟล์ใน repo
+- ถอดรหัสในเบราว์เซอร์ เก็บในหน่วยความจำเท่านั้น รีเฟรชต้องกรอกใหม่ ไม่ผ่าน `validate.js` (กติกา 24/30/3 ไม่ใช้กับชุดนี้) ตรวจด้วย `checkEdition`/`checkParity` ใน `src/lib/arise.js`
 
 ## ในโฟลเดอร์นี้แต่ไม่ใช่ส่วนของโปรเจกต์
 `exam-prep-30-days/` เป็นงานอีกชิ้น ถูกกันไว้ใน `.git/info/exclude` ห้ามแก้และห้าม commit

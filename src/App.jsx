@@ -8,11 +8,13 @@ import TopicPage from './components/TopicPage.jsx';
 import Practice from './components/Practice.jsx';
 import Exams, { examDefs, newExam } from './components/Exams.jsx';
 import ImportPage from './components/ImportPage.jsx';
+import ArisePage from './components/ArisePage.jsx';
 
 const NAV = [
   ['', 'หัวข้อ', 'Topics'],
   ['practice', 'ฝึกรวม', 'Practice'],
   ['exams', 'บททดสอบ', 'Exams'],
+  ['arise', 'ชุดฝึก Arise', 'Arise set'],
   ['import', 'นำเข้า', 'Import'],
 ];
 
@@ -24,6 +26,9 @@ export default function App() {
   // Exam state lives here so a running exam survives moving between pages.
   const [exam, setExam] = useState(null);
   const [examResult, setExamResult] = useState(null);
+  // Decrypted Arise set and its answers, in memory only (never stored).
+  const [arise, setArise] = useState(null);
+  const [ariseResults, setAriseResults] = useState({});
 
   const definitions = useMemo(() => examDefs(topics, exams, tracks, language), [topics, exams, tracks, language]);
   const displayedExam = useMemo(() => localizeAttempt(exam, topics, definitions), [exam, topics, definitions]);
@@ -41,6 +46,7 @@ export default function App() {
   if (page === 'topic') body = <TopicPage topics={topics} id={route[1]} tab={route[2] || 'learn'} />;
   else if (page === 'practice') body = <Practice topics={topics} />;
   else if (page === 'exams') body = <Exams topics={topics} exam={displayedExam} setExam={setExam} result={displayedResult} setResult={setExamResult} />;
+  else if (page === 'arise') body = <ArisePage data={arise} onUnlock={setArise} results={ariseResults} setResults={setAriseResults} view={route[1]} topicId={route[1] === 'topic' ? route[2] : undefined} />;
   else if (page === 'import') body = <ImportPage custom={custom} setCustom={setCustom} topics={topics} />;
   else body = <Home topics={topics} onPlacement={startPlacement} />;
 

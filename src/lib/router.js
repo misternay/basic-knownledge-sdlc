@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 // Hash routes work on GitHub Pages without server rewrites:
-// #/  ·  #/topic/sql  ·  #/topic/sql/quiz  ·  #/practice  ·  #/exams  ·  #/import
+// #/  ·  #/topic/sql  ·  #/topic/sql/quiz  ·  #/practice  ·  #/exams  ·  #/arise  ·  #/import
 const parse = () => window.location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
 
 export function useRoute() {

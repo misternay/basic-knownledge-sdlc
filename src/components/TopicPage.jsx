@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useI18n } from '../i18n.jsx';
 import { makeItem, questionDeck } from '../lib/random.js';
+import { ARISE_TOPIC_IDS } from '../lib/arise.js';
 import { Badge, Code } from './ui.jsx';
 import QuestionRunner from './QuestionRunner.jsx';
 import Exercise from './Exercise.jsx';
@@ -133,6 +134,7 @@ function Learn({ t: topic, topics, base, next }) {
         </p>
         <div className="row">
           {topic.questions.length > 0 && <a className="btn btn-accent" href={base + '/quiz'}>{t('ลองตอบ', 'Try')} {Math.min(10, topic.questions.length)} {t('ข้อ', 'questions')}</a>}
+          {ARISE_TOPIC_IDS.includes(topic.id) && <a className="btn btn-ghost-dark" href={'#/arise/topic/' + topic.id}>{t('ชุดฝึก Arise ของหัวข้อนี้', 'Arise practice for this topic')}</a>}
           {next && <a className="btn btn-ghost-dark" href={'#/topic/' + next.id}>{t('หัวข้อถัดไป:', 'Next topic:')} {next.title}</a>}
         </div>
       </section>
