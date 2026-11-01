@@ -160,6 +160,35 @@
       "title": "Handoff or agent-as-tool: who owns the answer?",
       "body": "OpenAI Agents SDK docs describe two common core patterns. With agents as tools, a manager agent keeps control of the conversation and calls specialists as tools. This suits cases where one agent should own the final answer, combine results from several specialists, or enforce guardrails in one place. With a handoff, a triage agent transfers the conversation to a specialist, which becomes the active agent for the rest of the turn. This suits workflows where routing is central and the specialist should answer the user directly. The patterns can also be combined.",
       "ref": "https://openai.github.io/openai-agents-python/multi_agent/"
+    },
+    {
+      "tier": "should",
+      "exam": true,
+      "ref": "https://platform.claude.com/docs/en/agents-and-tools/tool-use/how-tool-use-works",
+      "code": "User -> LLM -> tool request\nHarness -> validate + authorize -> tool\nTool -> result -> Harness -> LLM\nLLM -> next request OR final response",
+      "title": "Trace the loop: requests, execution, and observations",
+      "body": "For a client tool, the model proposes a tool name and arguments. The harness checks input, permissions, and required approval before execution, then returns a result associated with the call so the model can decide its next step. A missing observation can lead to repeated requests, but repetition alone does not prove that a result was lost; inspect the actual trace."
+    },
+    {
+      "tier": "should",
+      "exam": true,
+      "ref": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "title": "Duplicate calls: correlation IDs versus business intent",
+      "body": "Distinguish a replayed call, different call IDs for one business operation, and two intentionally identical operations. Matching tool names and arguments do not prove duplication: a user may want two identical instances. As a design recommendation, correlate results using protocol call IDs and prevent duplicate side effects using a business operation or idempotency key tied to intent. Do not assume every framework implements this policy automatically."
+    },
+    {
+      "tier": "should",
+      "exam": true,
+      "ref": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "title": "Concurrent calls and restarts need durable deduplication",
+      "body": "For mutating work, keep a durable operation key, parameters, and status, and claim work atomically so two workers cannot both pass a check and execute. Reuse a completed result for matching parameters according to the API contract; wait or reconcile in-flight work, and reject conflicting parameters under one key. An in-memory map disappears on restart, and a harness reservation alone cannot guarantee exactly-once effects across a remote API."
+    },
+    {
+      "tier": "should",
+      "exam": true,
+      "ref": "https://docs.stripe.com/api/idempotent_requests",
+      "title": "Timeouts leave uncertain outcomes, not proof of failure",
+      "body": "A remote tool may complete an operation before its response is lost. Check status or retry using the same idempotency key under the provider contract instead of blindly creating a new operation. If the outcome remains unknown, report uncertainty and stop or escalate according to risk. Repeated reads can be legitimate when fresh information is needed; separately enforce limits on turns, time, or cost for loops that make no progress."
     }
   ],
   "questions": [
@@ -501,6 +530,72 @@
       ],
       "answer": 0,
       "explain": "OWASP uses publishing posts on a user’s behalf as an example where the operation should include a routine for human approval before high-impact action. A better model may reduce mistakes, but the vulnerability applies regardless of why the LLM erred."
+    },
+    {
+      "answer": 1,
+      "prompt": "A harness receives a replay of a completed operation. Its durable record has the same operation key and parameters. Which response is appropriate?",
+      "options": [
+        "Execute again because each delivery may express new intent despite the matching operation key",
+        "Return the recorded result under the API contract",
+        "Silently discard the call without a tool result so the model cannot use an old observation",
+        "Replace the operation key on each delivery and retry to separate communication attempts"
+      ],
+      "explain": "The scenario identifies one completed operation. Reuse its result under the idempotency contract and still satisfy result correlation. Silence loses the observation, while a new key may create another effect."
+    },
+    {
+      "answer": 2,
+      "prompt": "An LLM returns two create_vm calls with different call IDs but identical arguments. What can the harness conclude?",
+      "options": [
+        "They are definitely duplicates, so discard the second without examining intent or the operation",
+        "They must both run because different call IDs guarantee different business operations",
+        "Intent and operation identity must be checked",
+        "The tool name alone proves equal outcomes, so the first result can always satisfy both calls"
+      ],
+      "explain": "A call ID correlates protocol messages, not business intent. The user may want two identical VMs, or the model may be repeating one operation. Check intent and operation identity before deduplicating."
+    },
+    {
+      "answer": 0,
+      "prompt": "Two workers receive the same operation key. Both check that it is absent and then execute a write tool. What is the issue?",
+      "options": [
+        "A race; atomically claim the operation key",
+        "A high-temperature issue; temperature zero prevents simultaneous worker execution",
+        "A model-schema issue; a longer description makes the storage check atomic automatically",
+        "A short-ID issue; longer call IDs fix the problem without changing the recording procedure"
+      ],
+      "explain": "Separate checks let both workers proceed. Coordinate through atomic claims or suitable uniqueness constraints, and use downstream idempotency for remote effects. Prompt wording cannot supply atomicity."
+    },
+    {
+      "answer": 3,
+      "prompt": "A payment tool charges successfully, but the response is lost and the harness times out. Which action best reduces duplicate charges?",
+      "options": [
+        "Create a new idempotency key and retry immediately because a timeout proves no charge occurred",
+        "Tell the model that no side effect occurred and let it retry with the same parameters",
+        "Increase model max_tokens and execute the request again so the response text is not truncated",
+        "Check status or reuse the key under the API contract"
+      ],
+      "explain": "A timeout proves no response was received, not that no effect occurred. Reconcile or retry under the existing key contract, and report an unknown outcome when it cannot be established."
+    },
+    {
+      "answer": 1,
+      "prompt": "An LLM calls read_status twice at different times to see whether pending work has completed. Must the harness immediately reuse the old result?",
+      "options": [
+        "Yes, identical tool names and arguments mean the underlying data cannot change",
+        "Not necessarily; check freshness and intent",
+        "Yes, a new call ID automatically turns the cached observation into a confirmed current result",
+        "Return neither observation, because polling requires the model to infer progress without feedback"
+      ],
+      "explain": "A repeated read may intentionally request fresh state. Do not deduplicate solely by name and arguments. Polling still needs appropriate waits and enforced stopping limits."
+    },
+    {
+      "answer": 0,
+      "prompt": "A tool fails, but the harness sends a tool_result claiming the operation succeeded. What is the main risk?",
+      "options": [
+        "The model may report success from false evidence",
+        "The downstream system must eventually perform the operation because the result text says success",
+        "The model always detects false results from the call ID and automatically repairs the operation",
+        "There is no effect because the model reads only the first prompt and never reads tool observations"
+      ],
+      "explain": "The model uses the supplied observation as context and may reason or report incorrectly. Preserve the actual outcome through the appropriate error protocol, such as Claude is_error."
     }
   ],
   "exercises": [
@@ -701,6 +796,11 @@
       "title": "Google ADK: Agents",
       "url": "https://google.github.io/adk-docs/agents/",
       "note": "When to move from one agent to a multi-agent workflow"
+    },
+    {
+      "title": "AWS Builders’ Library: Making retries safe with idempotent APIs",
+      "url": "https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/",
+      "note": "Operation intent, keys, atomicity, and uncertain outcomes"
     }
   ],
   "cheatsheet": [
@@ -713,6 +813,8 @@
     "Claude API: match every tool_use with a tool_result via tool_use_id, then combine results in the next single user message.",
     "MCP: tools are actions, resources are readable data, and prompts are templates users choose.",
     "The harness should trim or summarize old tool results and compact context; a larger context window only postpones the problem.",
-    "Evaluate agents by actual final state across multiple runs; inspect traces on failure instead of trusting claims of completion."
+    "Evaluate agents by actual final state across multiple runs; inspect traces on failure instead of trusting claims of completion.",
+    "For duplicate calls, call IDs correlate results while operation/idempotency keys identify intent; matching names and arguments do not prove a duplicate",
+    "A timeout is no response, not proof of no effect; reconcile or reuse the key under the contract, and enforce loop limits"
   ]
 }

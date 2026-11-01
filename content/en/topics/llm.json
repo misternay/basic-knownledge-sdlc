@@ -162,6 +162,20 @@
       "code": "Attention(Q, K, V) = softmax(Q·Kᵀ / √d_k) · V",
       "exam": true,
       "ref": "https://arxiv.org/abs/1706.03762"
+    },
+    {
+      "tier": "should",
+      "exam": true,
+      "ref": "https://www.anthropic.com/research/building-effective-agents",
+      "title": "LLM versus agent: the model and the surrounding loop",
+      "body": "An LLM generates output from its supplied context. An agent is a system in which the model chooses steps or tools and uses environmental feedback to continue, while a harness manages execution, state, permissions, and stopping. Generating a tool call is model output, not proof of a completed action. Multiple LLM calls along a fixed code path do not by themselves make a dynamically directed agent."
+    },
+    {
+      "tier": "should",
+      "exam": true,
+      "ref": "https://platform.claude.com/docs/en/build-with-claude/handling-stop-reasons",
+      "title": "Follow error propagation across the loop",
+      "body": "Trace input context, output and stop reason, request validation, tool outcome, and the next model context. A max_tokens stop can truncate tool input: obtain a complete validated request before execution. Schema conformance still does not establish authorization or business validity. Return real tool failures through the protocol instead of inventing success, since a false observation can contaminate later decisions. Use traces to distinguish model, harness, and downstream failures."
     }
   ],
   "questions": [
@@ -502,6 +516,28 @@
       ],
       "answer": 2,
       "explain": "Fixed-category tasks are well suited to code-based evaluation: it is fast, inexpensive, and repeatable. OpenAI eval examples use string checks against labels. Manual review is slow and costly; an LLM judge is more useful for open-ended answers that rules cannot score."
+    },
+    {
+      "answer": 1,
+      "prompt": "System A runs fixed retrieval-then-summary steps. System B lets an LLM choose tools from each round of feedback. Which distinction fits?",
+      "options": [
+        "A and B must use different model architectures because tool-using systems always require retraining",
+        "A is a workflow; B is an agent loop",
+        "A cannot use an LLM, while B needs no harness because the model executes application code itself",
+        "A is an agent because it makes multiple calls; B is only an LLM because it uses a single model"
+      ],
+      "explain": "The distinction is orchestration and who chooses the next step, not model count or retraining. Both may use an LLM; the harness still executes client tools and handles real outcomes."
+    },
+    {
+      "answer": 2,
+      "prompt": "Claude returns stop_reason=max_tokens and its tool input ends halfway through JSON. What should the harness do?",
+      "options": [
+        "Guess the missing arguments and execute immediately to reduce the latency of another model request",
+        "Treat it as completed because HTTP 200 guarantees that every tool input is complete and valid",
+        "Obtain a complete request and validate before execution",
+        "Grant all tools more permissions and substitute a successful result for the truncated JSON"
+      ],
+      "explain": "A successful HTTP response does not guarantee complete generated output. Check the stop reason and request integrity; obtain complete tool use after truncation rather than guessing side-effecting parameters."
     }
   ],
   "exercises": [
@@ -788,6 +824,8 @@
     "Evals need measurable criteria and real tasks with edge cases; rerun them whenever the prompt or model version changes.",
     "Structured outputs can enforce a JSON schema, but values may still be wrong; validate before use, especially for irreversible actions.",
     "Temperature 0 does not guarantee identical output, and low values do not make facts more accurate; many newer models no longer allow setting it.",
-    "Improve the prompt first; use RAG for missing or frequently changing information and fine-tuning to adjust format, style, or behavior."
+    "Improve the prompt first; use RAG for missing or frequently changing information and fine-tuning to adjust format, style, or behavior.",
+    "An LLM generates output from context; an agent uses model-directed feedback loops while the harness executes client tools and controls permissions and stopping",
+    "Trace failures through context → output/stop reason → validation → tool result → next context; never turn an unknown outcome or error into success"
   ]
 }
