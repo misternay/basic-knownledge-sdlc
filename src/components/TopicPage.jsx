@@ -13,6 +13,7 @@ const TIERS = [
   ['ขั้นสูง', 'เมื่อระบบหรือทีมใหญ่ขึ้น'],
 ];
 const TABS = [['learn', 'อ่าน'], ['quiz', 'ลองตอบ'], ['exercise', 'แบบฝึกหัด']];
+const POSTER_TOPICS = ['dsa', 'net', 'sysdesign'];
 
 export default function TopicPage({ topics, id, tab }) {
   const { t: translate, tracks } = useI18n();
@@ -43,8 +44,8 @@ export default function TopicPage({ topics, id, tab }) {
         </div>
       </div>
       <nav className="tabs" aria-label={translate('ส่วนของหัวข้อ', 'Topic sections')}>
-        {TABS.map(([key, th]) => (
-          (() => { const label = translate(th, ({ 'อ่าน': 'Learn', 'ลองตอบ': 'Quiz', 'แบบฝึกหัด': 'Exercises' })[th]); return (
+        {[...TABS, ...(!t.temp && POSTER_TOPICS.includes(t.id) ? [['infographics', 'ภาพสรุป']] : [])].map(([key, th]) => (
+          (() => { const label = translate(th, ({ 'อ่าน': 'Learn', 'ลองตอบ': 'Quiz', 'แบบฝึกหัด': 'Exercises', 'ภาพสรุป': 'Infographic' })[th]); return (
           <a key={key} className="tab" href={key === 'learn' ? base : base + '/' + key} aria-current={tab === key ? 'page' : undefined}>{label}</a>
           ); })()
         ))}
@@ -69,11 +70,25 @@ export default function TopicPage({ topics, id, tab }) {
         t.exercises.length ? <Exercises key={t.id} list={t.exercises} /> : (
           <Empty title={translate('หัวข้อนี้ยังไม่มีแบบฝึกหัด', 'No exercises in this topic yet')} text={translate('แบบฝึกหัดที่ตรวจอัตโนมัติต้องเขียนเป็น JSON ที่มี exercise และ checks ดูตัวอย่างได้ที่หน้านำเข้า', 'Auto-checked exercises use JSON with exercise and checks fields. See the import page for an example.')} />
         )
+      ) : tab === 'infographics' && !t.temp && POSTER_TOPICS.includes(t.id) ? (
+        <TopicPoster key={t.id} topic={t} />
       ) : (
         <Learn t={t} topics={topics} base={base} next={next} />
       )}
     </div>
   );
+}
+
+function TopicPoster({ topic }) {
+  const { t } = useI18n();
+  const [failed, setFailed] = useState(false);
+  const url = './infographics/' + topic.id + '-a4.png';
+  return <section className="stack-16">
+    <h2 className="h2">{t('ภาพสรุปสำหรับทบทวน', 'Review infographic')}</h2>
+    <p className="muted">{t('ภาพภาษาไทยสำหรับอ่านหรือพิมพ์บน A4 เป็นภาพรวมคัดประเด็นสำคัญ อ่านเงื่อนไขและรายละเอียดครบในแท็บอ่าน', 'Thai overview image for reading or printing on A4. See the Learn tab for full details and conditions.')}</p>
+    <div className="row no-print"><a className="btn btn-secondary" href={url} target="_blank" rel="noopener noreferrer">{t('เปิดภาพขนาดเต็ม', 'Open full-size image')} ↗</a><a className="link" href={url} download={topic.id + '-a4.png'}>{t('ดาวน์โหลด PNG', 'Download PNG')}</a><a className="link" href="./infographics/Dev-Trail-extra-topics-A4.pdf" download>{t('PDF รวม 3 บท', 'Three-topic PDF')}</a></div>
+    <figure className="arise-poster"><figcaption className="arise-poster-caption">{topic.title}</figcaption><div className="arise-poster-page">{failed ? <p role="status">{t('โหลดภาพไม่ได้ กรุณารีเฟรชหน้าเพื่อลองใหม่', 'Could not load the image. Refresh the page to retry.')}</p> : <img src={url} alt={t('ภาพสรุป ', 'Summary infographic: ') + topic.title} onError={() => setFailed(true)} />}</div></figure>
+  </section>;
 }
 
 function Learn({ t: topic, topics, base, next }) {
