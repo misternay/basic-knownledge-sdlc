@@ -55,3 +55,31 @@ test('vault round trip, wrong passphrase fails', async () => {
   assert.deepEqual(await open(envelope, 'right'), value);
   await assert.rejects(open(envelope, 'wrong'));
 });
+
+const recommendedEdition = () => ({ ...edition([q({ recommended: true })]), recommended: {
+  title: 'AI review', intro: 'Extra readings',
+  items: [{ id: 'loop', topic: 0, title: 'Loop', body: 'Read the trace', refs: ['https://example.com/docs'] }],
+  questionIds: ['q1'],
+} });
+
+test('recommended readings require valid topics, sources and matching practice IDs', () => {
+  const d = recommendedEdition();
+  assert.deepEqual(checkEdition(d), []);
+  assert.ok(checkEdition({ ...d, recommended: { ...d.recommended, questionIds: ['missing'] } }).length);
+  assert.ok(checkEdition({ ...d, questions: [q()] }).length);
+  assert.ok(checkEdition({ ...d, recommended: { ...d.recommended, items: [{ ...d.recommended.items[0], topic: 5 }] } }).length);
+  assert.ok(checkEdition({ ...d, recommended: { ...d.recommended, items: [{ ...d.recommended.items[0], refs: [] }] } }).length);
+  assert.ok(checkEdition({ ...d, recommended: { ...d.recommended, items: [...d.recommended.items, ...d.recommended.items] } }).length);
+});
+
+test('recommendation parity permits translation but protects content links and IDs', () => {
+  const th = recommendedEdition();
+  const en = structuredClone(th);
+  en.recommended.title = 'Translated';
+  en.recommended.items[0].body = 'Translated body';
+  assert.deepEqual(checkParity(th, en), []);
+  en.recommended.items[0].refs = ['https://example.com/other'];
+  assert.ok(checkParity(th, en).length);
+  assert.ok(checkParity(th, { ...th, recommended: undefined }).length);
+  assert.ok(checkParity(th, { ...th, questions: [q()] }).length);
+});

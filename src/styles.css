@@ -264,6 +264,8 @@ button, input, textarea { font: inherit; color: inherit; }
 .cheatsheet li::marker { color: var(--accent); }
 
 /* Arise practice set */
+.arise-recommended-notice { padding: 20px 24px; border: 1px solid var(--accent); border-radius: 12px; background: var(--accent-soft); }
+.tabs .arise-recommended-tab { color: var(--accent); font-weight: 700; background: var(--accent-soft); }
 .arise-media-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; }
 .arise-media-toolbar > label { min-width: min(100%, 260px); }
 .arise-poster { margin: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }

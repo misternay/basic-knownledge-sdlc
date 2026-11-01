@@ -39,6 +39,8 @@ npm run build          # check:content แล้ว vite build -> dist/
 
 ## ชุดฝึก Arise
 - โจทย์ 168 ข้อจากชุดฝึกรุ่นก่อน (single/multi/order มีเหตุผลทุกตัวเลือก) พร้อมคอร์ส บทเรียน และอ้างอิง ห้ามตัดข้อหรือข้อมูลออก
+- มีส่วนเสริม AI แนะนำให้อ่าน 6 เรื่องและข้อฝึก 8 ข้อ รวม 176 ข้อ เก็บใน `recommended` และ `questions` ของต้นฉบับทั้งสองภาษา ห้ามตัดกลับเหลือ 168 เมนู `#/arise/recommended` และ `#/arise/recommended-practice` แสดงและฝึกชุดนี้ โดยระบุว่าเป็นข้อแต่งเพิ่ม
+- `node scripts/encrypt-arise.mjs` ถามรหัสเดิมแบบซ่อน (หรือรับ `ARISE_PASSCODE`) และตรวจว่าเปิดไฟล์เดิมได้ก่อนเขียน เพื่อไม่เปลี่ยนรหัสจนเปิดภาพและ PDF เดิมไม่ได้
 - ต้นฉบับ `private/arise/th.json`, `en.json` อยู่นอก git (`.gitignore`) ห้าม commit เพราะ repo เป็น public ถ้าโฟลเดอร์นี้ไม่มีในเครื่อง แก้เนื้อหาชุดนี้ไม่ได้ (มีแต่ไฟล์เข้ารหัส)
 - ขึ้นเว็บเฉพาะ `public/arise.enc.json` (AES-GCM + PBKDF2, `src/lib/vault.js`) แก้ต้นฉบับแล้วเข้ารหัสใหม่: `ARISE_PASSCODE='...' node scripts/encrypt-arise.mjs` แล้ว commit ไฟล์ `.enc.json` ห้ามใส่รหัสลงไฟล์ใน repo
 - ถอดรหัสในเบราว์เซอร์ เก็บในหน่วยความจำเท่านั้น รีเฟรชต้องกรอกใหม่ ไม่ผ่าน `validate.js` (กติกา 24/30/3 ไม่ใช้กับชุดนี้) ตรวจด้วย `checkEdition`/`checkParity` ใน `src/lib/arise.js` (ฉบับ en ต้องมี id, เฉลย และโครงสร้าง cheatsheet ตรงกับ th)

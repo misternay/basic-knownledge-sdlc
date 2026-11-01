@@ -4,10 +4,13 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { checkEdition, checkParity } from '../src/lib/arise.js';
 import { open, seal } from '../src/lib/vault.js';
+import { readPassphrase } from './encrypt-arise-media.mjs';
 
-const passphrase = process.env.ARISE_PASSCODE;
-if (!passphrase) {
-  console.error('Set ARISE_PASSCODE to the passphrase first.');
+const passphrase = await readPassphrase();
+try {
+  await open(JSON.parse(readFileSync(new URL('../public/arise.enc.json', import.meta.url), 'utf8')), passphrase);
+} catch {
+  console.error('The passphrase did not unlock the existing Arise set. No files were changed.');
   process.exit(1);
 }
 

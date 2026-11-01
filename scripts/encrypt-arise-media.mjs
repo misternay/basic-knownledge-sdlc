@@ -39,7 +39,7 @@ export async function packMedia({ passphrase, sourceDir, outputDir, ariseEnvelop
   return assets.length;
 }
 
-async function password() {
+export async function readPassphrase() {
   if (process.env.ARISE_PASSCODE) return process.env.ARISE_PASSCODE;
   if (!process.stdin.isTTY) throw new Error('Run in a terminal, or set ARISE_PASSCODE in the environment.');
   process.stdout.write('Existing Arise passphrase (hidden): ');
@@ -55,7 +55,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const root = fileURLToPath(new URL('../', import.meta.url));
   try {
     const count = await packMedia({
-      passphrase: await password(),
+      passphrase: await readPassphrase(),
       sourceDir: join(root, 'private/arise/infographics'),
       outputDir: join(root, 'public/arise-media'),
       ariseEnvelope: JSON.parse(await readFile(join(root, 'public/arise.enc.json'), 'utf8')),

@@ -62,6 +62,20 @@ export function checkEdition(d) {
     if (q.type === 'multi' && !a.length) errors.push(at + 'multi needs an answer');
     if (q.type === 'order' && a.length !== q.choices.length) errors.push(at + 'order answer must be a permutation');
   }
+  if (d.recommended) {
+    const r = d.recommended;
+    const text = (s) => typeof s === 'string' && s.trim();
+    if (!text(r.title) || !text(r.intro) || !r.items?.length) errors.push('recommended: needs title, intro and items');
+    const itemIds = new Set();
+    for (const item of r.items || []) {
+      if (!text(item.id) || itemIds.has(item.id)) errors.push('recommended: invalid or duplicate item id');
+      itemIds.add(item.id);
+      if (!text(item.title) || !text(item.body) || !Number.isInteger(item.topic) || item.topic < 0 || item.topic >= n) errors.push('recommended: invalid reading');
+      if (!item.refs?.length || item.refs.some((url) => typeof url !== 'string' || !url.startsWith('https://'))) errors.push('recommended: missing source');
+    }
+    const selected = r.questionIds || [];
+    if (!selected.length || new Set(selected).size !== selected.length || selected.some((id) => !d.questions?.some((q) => q.id === id && q.recommended === true))) errors.push('recommended: invalid practice question ids');
+  }
   return errors;
 }
 
@@ -78,6 +92,14 @@ export function checkParity(th, en) {
   const shape = (c) => c && JSON.stringify([Boolean(c.mnemonic), c.groups?.map((g) => g.items?.map((it) => it.trap !== undefined))]);
   (th.cheatsheet || []).forEach((c, i) => {
     if (shape(en.cheatsheet?.[i]) !== shape(c)) errors.push('cheatsheet ' + i + ': structure differs');
+  });
+  const recommendationShape = (d) => d.recommended ? {
+    items: d.recommended.items?.map((item) => [item.id, item.topic, item.code || null, item.refs]),
+    questions: d.recommended.questionIds,
+  } : null;
+  if (JSON.stringify(recommendationShape(th)) !== JSON.stringify(recommendationShape(en))) errors.push('recommended: structure differs');
+  th.questions.forEach((q, i) => {
+    if (Boolean(q.recommended) !== Boolean(en.questions[i]?.recommended)) errors.push('question ' + q.id + ': recommendation differs');
   });
   return errors;
 }

@@ -3,7 +3,7 @@ import { ARISE_URL, answerLabel, filterQuestions, grade } from '../lib/arise.js'
 import { LETTERS, shuffle } from '../lib/random.js';
 import { open } from '../lib/vault.js';
 import { useI18n } from '../i18n.jsx';
-import { Badge, Progress } from './ui.jsx';
+import { Badge, Progress, Code } from './ui.jsx';
 import AriseConceptMap from './AriseConceptMap.jsx';
 import AriseInfographics from './AriseInfographics.jsx';
 
@@ -13,22 +13,26 @@ export default function ArisePage({ data, onUnlock, results, setResults, view, t
   const { language, t } = useI18n();
   if (!data) return <Unlock onUnlock={onUnlock} />;
   const set = data[language] || data.th;
-  const tab = ['learn', 'sheet', 'infographics'].includes(view) ? view : 'practice';
+  const tab = ['learn', 'sheet', 'infographics', 'recommended', 'recommended-practice'].includes(view) ? view : 'practice';
   return (
     <div className="stack-24">
       <div className="stack-6">
         <h1 className="h1">{t('ชุดฝึก Arise', 'Arise practice set')}</h1>
         <p className="lead">{t(
-          `${set.questions.length} ข้อจากชุดฝึกรุ่นก่อน มีทั้งข้อจากชีทอบรมและข้อแต่งเพิ่ม พร้อมเหตุผลของทุกตัวเลือก คำตอบเก็บไว้แค่จนกว่าจะรีเฟรชหน้า`,
-          `${set.questions.length} questions from an earlier cohort's practice set, from training sheets and extra practice, with a reason for every choice. Answers are kept only until you refresh.`,
+          `${set.questions.length} ข้อ รวมชุดฝึกเดิมและข้อฝึกแต่งเพิ่ม พร้อมเหตุผลของทุกตัวเลือก คำตอบเก็บไว้แค่จนกว่าจะรีเฟรชหน้า`,
+          `${set.questions.length} questions combining the original set and additional practice, with a reason for every choice. Answers are kept only until you refresh.`,
         )}</p>
       </div>
       <nav className="tabs no-print" aria-label={t('ส่วนของชุดฝึก', 'Practice set sections')}>
         {[['practice', '#/arise', t('ฝึกทำโจทย์', 'Practice')], ['sheet', '#/arise/sheet', t('สรุปย่อ', 'Cheat sheet')], ['infographics', '#/arise/infographics', t('อินโฟกราฟิก', 'Infographics')], ['learn', '#/arise/learn', t('บทเรียนและคอร์ส', 'Lessons and courses')]].map(([key, href, label]) => (
           <a key={key} className="tab" href={href} aria-current={tab === key ? 'page' : undefined}>{label}</a>
         ))}
+        {set.recommended && <a className="tab arise-recommended-tab" href="#/arise/recommended" aria-current={tab === 'recommended' || tab === 'recommended-practice' ? 'page' : undefined}>{t('แนะนำให้อ่าน', 'Recommended reading')}</a>}
       </nav>
-      {tab === 'learn' ? <Learning set={set} />
+      {set.recommended && tab !== 'recommended' && <RecommendedNotice recommendation={set.recommended} />}
+      {tab === 'recommended' ? <RecommendedReadings set={set} />
+        : tab === 'recommended-practice' ? <Drill key="recommended" set={set} results={results} setResults={setResults} recommendedOnly />
+        : tab === 'learn' ? <Learning set={set} />
         : tab === 'sheet' ? <Sheet set={set} />
         : tab === 'infographics' ? <AriseInfographics set={set} decrypt={data.openMedia} />
         : <Drill key={topicId || 'all'} set={set} results={results} setResults={setResults} topicId={topicId} />}
@@ -80,14 +84,39 @@ function Unlock({ onUnlock }) {
   );
 }
 
-function Drill({ set, results, setResults, topicId }) {
+function RecommendedNotice({ recommendation }) {
+  const { t } = useI18n();
+  return <aside className="arise-recommended-notice stack-8" aria-label={t('แนะนำให้อ่าน', 'Recommended reading')}>
+    <div className="row-8"><Badge kind="dark">{t('แนะนำให้อ่าน', 'Recommended reading')}</Badge><strong>{recommendation.title}</strong></div>
+    <p className="small">{recommendation.intro}</p>
+    <div className="row"><a className="btn btn-primary btn-sm" href="#/arise/recommended">{t('เปิดบทอ่านแนะนำ', 'Read the recommendations')}</a><a className="link" href="#/arise/recommended-practice">{t('ฝึกเฉพาะชุดนี้', 'Practice this set')} ({recommendation.questionIds.length})</a></div>
+  </aside>;
+}
+
+function RecommendedReadings({ set }) {
+  const { t } = useI18n();
+  const r = set.recommended;
+  if (!r) return <p>{t('ชุดนี้ยังไม่มีบทอ่านแนะนำ', 'This edition has no recommendations yet.')}</p>;
+  return <div className="stack-24 narrow">
+    <RecommendedNotice recommendation={r} />
+    {r.items.map((item, i) => <article className="card stack-12" key={item.id}>
+      <div className="row-8"><Badge kind="soft">{set.topics[item.topic]}</Badge><span className="small muted">{i + 1} / {r.items.length}</span></div>
+      <h2 className="h3">{item.title}</h2><p>{item.body}</p><Code>{item.code}</Code>
+      <div className="row">{item.refs.map((url) => <a className="link small" key={url} href={url} target="_blank" rel="noopener noreferrer">{t('เอกสารอ้างอิง', 'Source documentation')} ↗</a>)}</div>
+    </article>)}
+    <a className="btn btn-primary self-start" href="#/arise/recommended-practice">{t('ฝึกสถานการณ์จากบทอ่านนี้', 'Practice these scenarios')} ({r.questionIds.length})</a>
+  </div>;
+}
+
+function Drill({ set, results, setResults, topicId, recommendedOnly = false }) {
   const { t } = useI18n();
   const start = set.topicIds.indexOf(topicId);
   const [filter, setFilter] = useState({ topic: start >= 0 ? String(start) : 'all', source: 'all', alignment: 'all' });
   const [order, setOrder] = useState(null); // shuffled question ids, null = original order
   const [index, setIndex] = useState(0);
 
-  const ordered = order ? order.map((id) => set.questions.find((q) => q.id === id)) : set.questions;
+  const pool = recommendedOnly ? set.questions.filter((q) => set.recommended?.questionIds.includes(q.id)) : set.questions;
+  const ordered = order ? order.map((id) => pool.find((q) => q.id === id)) : pool;
   const list = filterQuestions(ordered, filter);
   const at = Math.min(index, Math.max(0, list.length - 1));
   const q = list[at];
@@ -192,6 +221,7 @@ function Question({ q, set, picked, onSubmit, onRetry }) {
       <div className="row-8">
         <Badge kind="dark">{typeLabel}</Badge>
         <Badge kind="temp">{originLabel}</Badge>
+        {q.recommended && <Badge kind="dark">{t('แนะนำให้ฝึก', 'Recommended practice')}</Badge>}
         {q.scored === false && <Badge kind="bad">{t('ไม่คิดคะแนน', 'Not scored')}</Badge>}
       </div>
 
@@ -330,6 +360,7 @@ function Sheet({ set }) {
           <section key={i} className="stack-16 arise-sheet">
             <div className="tier-head">
               <h2 className="h2">{i + 1}. {set.topics[i]}</h2>
+              {set.recommended?.items.some((item) => item.topic === i) && <Badge kind="dark">{t('แนะนำให้อ่าน', 'Recommended reading')}</Badge>}
               <span className="muted">{t(`${qs.length} ข้อ`, `${qs.length} questions`)}</span>
             </div>
             {c && <p className="arise-story">{c.story}</p>}
@@ -392,6 +423,7 @@ function Learning({ set }) {
                 <div className="row-8">
                   <Badge>{t('บท ', 'Ch. ')}{i + 1}</Badge>
                   <Badge kind="soft">Sphere: {l.coverage}</Badge>
+                  {set.recommended?.items.some((item) => item.topic === i) && <Badge kind="dark">{t('แนะนำให้อ่าน', 'Recommended reading')}</Badge>}
                 </div>
                 <h3 className="card-title">{title}</h3>
                 <ul className="stack-4">{l.read.map((x, k) => <li key={k}>{x}</li>)}</ul>
