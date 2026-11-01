@@ -4,6 +4,7 @@ import { LETTERS, shuffle } from '../lib/random.js';
 import { open } from '../lib/vault.js';
 import { useI18n } from '../i18n.jsx';
 import { Badge, Progress } from './ui.jsx';
+import AriseConceptMap from './AriseConceptMap.jsx';
 
 // #/arise · #/arise/learn · #/arise/topic/<id>
 // data and results live in App memory only: a refresh asks for the passphrase again.
@@ -328,6 +329,7 @@ function Sheet({ set }) {
               <span className="muted">{t(`${qs.length} ข้อ`, `${qs.length} questions`)}</span>
             </div>
             {c && <p className="arise-story">{c.story}</p>}
+            {c && <AriseConceptMap key={i} title={set.topics[i]} chapter={c} chapterIndex={i} selfTest={selfTest} revealed={revealed} onReveal={reveal} />}
             {c?.groups.map((g, gi) => (
               <div key={gi} className="stack-8">
                 <h3 className="h3">{g.title}</h3>
