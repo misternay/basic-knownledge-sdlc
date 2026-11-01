@@ -264,6 +264,14 @@ button, input, textarea { font: inherit; color: inherit; }
 .cheatsheet li::marker { color: var(--accent); }
 
 /* Arise practice set */
+.arise-media-toolbar { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; }
+.arise-media-toolbar > label { min-width: min(100%, 260px); }
+.arise-poster { margin: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.arise-poster-caption { padding: 16px 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); }
+.arise-poster-page { max-width: 900px; margin: 0 auto; background: white; }
+.arise-poster-page img { display: block; width: 100%; height: auto; }
+.arise-poster-placeholder { min-height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; text-align: center; }
+.arise-poster-page[aria-busy="true"] { aspect-ratio: 210 / 297; }
 .input { width: 100%; min-height: 48px; padding: 0 14px; border: 1px solid var(--line-2, var(--line)); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; }
 .input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .error { color: var(--bad-ink); font-weight: 600; }

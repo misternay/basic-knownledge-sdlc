@@ -5,14 +5,15 @@ import { open } from '../lib/vault.js';
 import { useI18n } from '../i18n.jsx';
 import { Badge, Progress } from './ui.jsx';
 import AriseConceptMap from './AriseConceptMap.jsx';
+import AriseInfographics from './AriseInfographics.jsx';
 
-// #/arise · #/arise/learn · #/arise/topic/<id>
+// #/arise · #/arise/learn · #/arise/sheet · #/arise/infographics · #/arise/topic/<id>
 // data and results live in App memory only: a refresh asks for the passphrase again.
 export default function ArisePage({ data, onUnlock, results, setResults, view, topicId }) {
   const { language, t } = useI18n();
   if (!data) return <Unlock onUnlock={onUnlock} />;
   const set = data[language] || data.th;
-  const tab = view === 'learn' || view === 'sheet' ? view : 'practice';
+  const tab = ['learn', 'sheet', 'infographics'].includes(view) ? view : 'practice';
   return (
     <div className="stack-24">
       <div className="stack-6">
@@ -23,12 +24,13 @@ export default function ArisePage({ data, onUnlock, results, setResults, view, t
         )}</p>
       </div>
       <nav className="tabs no-print" aria-label={t('ส่วนของชุดฝึก', 'Practice set sections')}>
-        {[['practice', '#/arise', t('ฝึกทำโจทย์', 'Practice')], ['sheet', '#/arise/sheet', t('สรุปย่อ', 'Cheat sheet')], ['learn', '#/arise/learn', t('บทเรียนและคอร์ส', 'Lessons and courses')]].map(([key, href, label]) => (
+        {[['practice', '#/arise', t('ฝึกทำโจทย์', 'Practice')], ['sheet', '#/arise/sheet', t('สรุปย่อ', 'Cheat sheet')], ['infographics', '#/arise/infographics', t('อินโฟกราฟิก', 'Infographics')], ['learn', '#/arise/learn', t('บทเรียนและคอร์ส', 'Lessons and courses')]].map(([key, href, label]) => (
           <a key={key} className="tab" href={href} aria-current={tab === key ? 'page' : undefined}>{label}</a>
         ))}
       </nav>
       {tab === 'learn' ? <Learning set={set} />
         : tab === 'sheet' ? <Sheet set={set} />
+        : tab === 'infographics' ? <AriseInfographics set={set} decrypt={data.openMedia} />
         : <Drill key={topicId || 'all'} set={set} results={results} setResults={setResults} topicId={topicId} />}
     </div>
   );
@@ -52,7 +54,9 @@ function Unlock({ onUnlock }) {
       return;
     }
     try {
-      onUnlock(await open(envelope, code));
+      const editions = await open(envelope, code);
+      // The closure is kept only in App memory and is discarded on refresh.
+      onUnlock({ ...editions, openMedia: (media) => open(media, code) });
     } catch {
       setState('wrong');
     }

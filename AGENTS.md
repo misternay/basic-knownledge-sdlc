@@ -38,6 +38,7 @@ push ขึ้น `main` แล้ว `.github/workflows/deploy.yml` จะ depl
 ## ชุดฝึก Arise (สำคัญเรื่องความปลอดภัย)
 - repo เป็น **public** ต้นฉบับ `private/arise/th.json` และ `en.json` อยู่นอก git (`.gitignore`) **ห้าม commit ไฟล์ใน `private/` และ `Arise_Exam_Practice.html`**
 - ขึ้นเว็บเฉพาะ `public/arise.enc.json` ที่เข้ารหัสแล้ว แก้ต้นฉบับแล้วเข้ารหัสใหม่ด้วย `ARISE_PASSCODE='...' node scripts/encrypt-arise.mjs` แล้ว commit ไฟล์ `.enc.json`
+- อินโฟกราฟิกและ PDF เผยแพร่เฉพาะ `public/arise-media/*.enc.json` ที่เข้ารหัสด้วยรหัส Arise เดิม สร้างด้วย `node scripts/encrypt-arise-media.mjs` ต้นฉบับใน `private/arise/infographics/` ห้ามนำขึ้น public
 - **ห้ามเขียนรหัสลงไฟล์ใดใน repo** ทั้งโค้ด เอกสาร ข้อความ commit และ test
 - ห้ามตัดโจทย์หรือข้อมูลของชุดนี้ออก ตรวจโครงสร้างด้วย `checkEdition` และ `checkParity` ใน `src/lib/arise.js` (ชุดนี้ไม่ใช้กติกา 24/30/3)
 - cheatsheet ทุกข้อต้องมีที่มาจากเฉลย เหตุผล หรือหมายเหตุของโจทย์ คงคำอย่าง "อาจ" "โดยทั่วไป" และเงื่อนไขไว้ ห้ามเอาตัวเลือกผิดมาเป็นกฎ ฉากเปิด (`story`) เป็นเรื่องสมมติ ห้ามมีข้อเท็จจริงทางเทคนิคเพิ่ม
