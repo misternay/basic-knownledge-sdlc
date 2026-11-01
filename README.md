@@ -34,13 +34,18 @@ content/
   learning-paths.json  ลำดับเรียน พื้นฐาน ผลลัพธ์ และโปรเจกต์รวมสองภาษา
   exams.json           ชนิดบททดสอบ
   AUTHORING.md         กติกาการเขียนเนื้อหา
+public/arise.enc.json  ชุดฝึก Arise ที่เข้ารหัสแล้ว
 scripts/check-content.mjs
+scripts/encrypt-arise.mjs  เข้ารหัสชุดฝึก Arise จาก private/arise/
 src/
   lib/validate.js      ตัวตรวจเนื้อหา ใช้ร่วมกันทั้งหน้านำเข้าและตอน build
   lib/markdown.js      แปลง Markdown เป็น topic
   lib/checks.js        ตรวจคำตอบแบบฝึกหัด
+  lib/arise.js         ตรวจคำตอบและโครงสร้างของชุดฝึก Arise
+  lib/vault.js         เข้ารหัส/ถอดรหัส (AES-GCM + PBKDF2) ใช้ได้ทั้ง Node และ browser
   components/          หน้าต่าง ๆ ของแอป
 tests/
+private/               ต้นฉบับชุดฝึก Arise ไม่อยู่ใน git
 ```
 
 ## เพิ่มหรือแก้เนื้อหา
