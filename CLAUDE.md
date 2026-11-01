@@ -27,7 +27,7 @@ npm run build          # check:content แล้ว vite build -> dist/
 - `content/tracks.json`, `content/exams.json` เส้นทาง 4 สาย และชนิดบททดสอบ
 - `src/lib/validate.js` ตัวตรวจเนื้อหา ใช้ร่วมกันทั้งหน้า "นำเข้า" และ `scripts/check-content.mjs`
 - `src/lib/markdown.js` แปลง Markdown เป็น topic, `src/lib/checks.js` ตรวจคำตอบแบบฝึกหัด
-- `src/components/` หน้า Home, TopicPage, QuestionRunner, Exercise, Practice, Exams, ImportPage
+- `src/components/` หน้า Home, TopicPage, QuestionRunner, Exercise, Practice, Exams, ImportPage, ArisePage
 - `.github/workflows/deploy.yml` ตรวจเนื้อหา, test, build แล้ว deploy Pages เมื่อ push ขึ้น `main` (PR ตรวจแต่ไม่ deploy)
 
 ## กติกาเนื้อหา (สรุปจาก AUTHORING.md)
@@ -39,9 +39,12 @@ npm run build          # check:content แล้ว vite build -> dist/
 
 ## ชุดฝึก Arise
 - โจทย์ 168 ข้อจากชุดฝึกรุ่นก่อน (single/multi/order มีเหตุผลทุกตัวเลือก) พร้อมคอร์ส บทเรียน และอ้างอิง ห้ามตัดข้อหรือข้อมูลออก
-- ต้นฉบับ `private/arise/th.json`, `en.json` อยู่นอก git (`.git/info/exclude`) ห้าม commit เพราะ repo เป็น public
-- ขึ้นเว็บเฉพาะ `public/arise.enc.json` (AES-GCM + PBKDF2, `src/lib/vault.js`) แก้ต้นฉบับแล้วเข้ารหัสใหม่: `ARISE_PASSCODE='...' node scripts/encrypt-arise.mjs` ห้ามใส่รหัสลงไฟล์ใน repo
-- ถอดรหัสในเบราว์เซอร์ เก็บในหน่วยความจำเท่านั้น รีเฟรชต้องกรอกใหม่ ไม่ผ่าน `validate.js` (กติกา 24/30/3 ไม่ใช้กับชุดนี้) ตรวจด้วย `checkEdition`/`checkParity` ใน `src/lib/arise.js`
+- ต้นฉบับ `private/arise/th.json`, `en.json` อยู่นอก git (`.gitignore`) ห้าม commit เพราะ repo เป็น public ถ้าโฟลเดอร์นี้ไม่มีในเครื่อง แก้เนื้อหาชุดนี้ไม่ได้ (มีแต่ไฟล์เข้ารหัส)
+- ขึ้นเว็บเฉพาะ `public/arise.enc.json` (AES-GCM + PBKDF2, `src/lib/vault.js`) แก้ต้นฉบับแล้วเข้ารหัสใหม่: `ARISE_PASSCODE='...' node scripts/encrypt-arise.mjs` แล้ว commit ไฟล์ `.enc.json` ห้ามใส่รหัสลงไฟล์ใน repo
+- ถอดรหัสในเบราว์เซอร์ เก็บในหน่วยความจำเท่านั้น รีเฟรชต้องกรอกใหม่ ไม่ผ่าน `validate.js` (กติกา 24/30/3 ไม่ใช้กับชุดนี้) ตรวจด้วย `checkEdition`/`checkParity` ใน `src/lib/arise.js` (ฉบับ en ต้องมี id, เฉลย และโครงสร้าง cheatsheet ตรงกับ th)
+- หน้า `#/arise` มี 3 แท็บ: ฝึกทำโจทย์, สรุปย่อ (`#/arise/sheet`), บทเรียนและคอร์ส (`#/arise/learn`) หน้าหัวข้อ 14 หัวข้อมีปุ่มไป `#/arise/topic/<id>` (`ARISE_TOPIC_IDS`)
+- `cheatsheet` ต่อบท = `{story, groups: [{title, items: [{key, rule, trap?}]}], mnemonic}` ทุกข้อต้องมีที่มาจากเฉลย/เหตุผล/หมายเหตุของโจทย์ในบทนั้น คงคำอย่าง "อาจ" "โดยทั่วไป" และเงื่อนไขไว้ ห้ามเอาตัวเลือกผิดมาเป็นกฎ `story` เป็นฉากสมมติ ห้ามมีข้อเท็จจริงทางเทคนิคเพิ่ม เฉลยย่อรายข้อสร้างจากโจทย์ตอนแสดงผล ไม่ได้เก็บแยก
+- แบบร่างและไฟล์แก้อยู่ใน `private/arise/batches/` รวมเข้าต้นฉบับด้วย `python3 -I private/arise/merge-cheatsheet.py`
 
 ## ในโฟลเดอร์นี้แต่ไม่ใช่ส่วนของโปรเจกต์
 `exam-prep-30-days/` เป็นงานอีกชิ้น ถูกกันไว้ใน `.git/info/exclude` ห้ามแก้และห้าม commit
