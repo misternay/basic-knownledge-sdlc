@@ -269,3 +269,16 @@ button, input, textarea { font: inherit; color: inherit; }
 .error { color: var(--bad-ink); font-weight: 600; }
 .arise-toolbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 12px; align-items: end; }
 .arise-order { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.arise-check { min-height: 48px; padding: 0 14px; border-width: 1px; border-radius: 10px; }
+.arise-key { margin: 0; padding: 14px 22px 14px 44px; list-style: decimal; display: grid; gap: 10px; line-height: 1.6; }
+.arise-key li > * { display: block; }
+.arise-key b { color: var(--accent); font-weight: 600; }
+
+@media print {
+  .topbar, .footer, .skip, .no-print { display: none !important; }
+  body, .app, .main { background: #fff !important; }
+  .card { border-color: #bbb; box-shadow: none; }
+  .arise-sheet { break-inside: auto; }
+  .cheatsheet li, .arise-key li { break-inside: avoid; }
+  a { color: inherit; text-decoration: none; }
+}

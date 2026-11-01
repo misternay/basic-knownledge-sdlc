@@ -34,6 +34,9 @@ test('checkEdition catches broken answers and reasons', () => {
   assert.ok(checkEdition(edition([q({ reasons: ['x'] })])).length);
   assert.ok(checkEdition(edition([q({ type: 'order', answer: [0, 1] })])).length);
   assert.ok(checkEdition(edition([q(), q()])).some((e) => e.includes('duplicate')));
+  assert.deepEqual(checkEdition({ ...edition([q()]), cheatsheet: [['line']] }), []);
+  assert.ok(checkEdition({ ...edition([q()]), cheatsheet: [] }).length);
+  assert.ok(checkEdition({ ...edition([q()]), cheatsheet: [['']] }).length);
 });
 
 test('checkParity requires matching ids and answers', () => {

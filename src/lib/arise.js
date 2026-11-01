@@ -35,6 +35,7 @@ export function checkEdition(d) {
   if (!n) errors.push('topics: empty');
   if (d.topicIds?.length !== n) errors.push('topicIds: length must match topics');
   if (d.learning?.length !== n) errors.push('learning: length must match topics');
+  if (d.cheatsheet && (d.cheatsheet.length !== n || d.cheatsheet.some((lines) => !Array.isArray(lines) || lines.some((l) => typeof l !== 'string' || !l.trim())))) errors.push('cheatsheet: one list of non-empty lines per topic');
   const ids = new Set();
   for (const q of d.questions || []) {
     const at = 'question ' + q.id + ': ';
@@ -63,6 +64,9 @@ export function checkParity(th, en) {
     const e = en.questions[i];
     if (e.id !== q.id) errors.push('question ' + i + ': id differs');
     else if (e.type !== q.type || JSON.stringify(e.answer) !== JSON.stringify(q.answer) || e.choices.length !== q.choices.length) errors.push('question ' + q.id + ': type, answer or choices differ');
+  });
+  (th.cheatsheet || []).forEach((lines, i) => {
+    if (en.cheatsheet?.[i]?.length !== lines.length) errors.push('cheatsheet ' + i + ': line count differs');
   });
   return errors;
 }

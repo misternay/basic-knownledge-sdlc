@@ -11,7 +11,7 @@ export default function ArisePage({ data, onUnlock, results, setResults, view, t
   const { language, t } = useI18n();
   if (!data) return <Unlock onUnlock={onUnlock} />;
   const set = data[language] || data.th;
-  const learn = view === 'learn';
+  const tab = view === 'learn' || view === 'sheet' ? view : 'practice';
   return (
     <div className="stack-24">
       <div className="stack-6">
@@ -21,12 +21,13 @@ export default function ArisePage({ data, onUnlock, results, setResults, view, t
           `${set.questions.length} questions from an earlier cohort's practice set, from training sheets and extra practice, with a reason for every choice. Answers are kept only until you refresh.`,
         )}</p>
       </div>
-      <nav className="tabs" aria-label={t('ส่วนของชุดฝึก', 'Practice set sections')}>
-        <a className="tab" href="#/arise" aria-current={learn ? undefined : 'page'}>{t('ฝึกทำโจทย์', 'Practice')}</a>
-        <a className="tab" href="#/arise/learn" aria-current={learn ? 'page' : undefined}>{t('บทเรียนและคอร์ส', 'Lessons and courses')}</a>
+      <nav className="tabs no-print" aria-label={t('ส่วนของชุดฝึก', 'Practice set sections')}>
+        {[['practice', '#/arise', t('ฝึกทำโจทย์', 'Practice')], ['sheet', '#/arise/sheet', t('สรุปย่อ', 'Cheat sheet')], ['learn', '#/arise/learn', t('บทเรียนและคอร์ส', 'Lessons and courses')]].map(([key, href, label]) => (
+          <a key={key} className="tab" href={href} aria-current={tab === key ? 'page' : undefined}>{label}</a>
+        ))}
       </nav>
-      {learn
-        ? <Learning set={set} />
+      {tab === 'learn' ? <Learning set={set} />
+        : tab === 'sheet' ? <Sheet set={set} />
         : <Drill key={topicId || 'all'} set={set} results={results} setResults={setResults} topicId={topicId} />}
     </div>
   );
@@ -276,6 +277,60 @@ function Feedback({ q, set, picked, result }) {
         </details>
       )}
       <p className="small muted">{t('คำอธิบายสำหรับทบทวน ไม่ใช่เฉลยทางการจากผู้จัดสอบ', 'Explanations are for review, not an official answer key from the exam organizer.')}</p>
+    </div>
+  );
+}
+
+// Chapter principles (authored from the set's answers and reasons) plus an
+// answer key built straight from the questions, so it can't drift from them.
+function Sheet({ set }) {
+  const { t } = useI18n();
+  const [chapter, setChapter] = useState('all');
+  const [showKeys, setShowKeys] = useState(false);
+  const chapters = set.topics.map((title, i) => i).filter((i) => chapter === 'all' || String(i) === chapter);
+  const correct = (q) => q.answer.map((i) => q.choices[i]).join(q.type === 'order' ? ' → ' : ' + ');
+  return (
+    <div className="stack-24">
+      <div className="arise-toolbar no-print">
+        <label className="stack-4">
+          <span className="label">{t('บท', 'Chapter')}</span>
+          <select className="input" value={chapter} onChange={(e) => setChapter(e.target.value)}>
+            <option value="all">{t('ทุกบท', 'All chapters')}</option>
+            {set.topics.map((name, i) => <option key={i} value={String(i)}>{i + 1}. {name}</option>)}
+          </select>
+        </label>
+        <label className="option arise-check">
+          <input type="checkbox" checked={showKeys} onChange={(e) => setShowKeys(e.target.checked)} />
+          <span className="grow">{t('แสดงเฉลยย่อรายข้อ', 'Show the answer key')}</span>
+        </label>
+        <button type="button" className="btn btn-secondary" onClick={() => window.print()}>{t('พิมพ์ / บันทึก PDF', 'Print / save as PDF')}</button>
+      </div>
+      <p className="muted small">{t(
+        'สรุปจากเฉลย เหตุผล และหมายเหตุของโจทย์ในแต่ละบท ข้อหนึ่งอาจอยู่ได้หลายบท',
+        'Summarized from the answers, reasons and notes in each chapter. A question can belong to more than one chapter.',
+      )}</p>
+      {chapters.map((i) => {
+        const qs = set.questions.filter((q) => q.topics.includes(i));
+        return (
+          <section key={i} className="stack-12 arise-sheet">
+            <div className="tier-head">
+              <h2 className="h2">{i + 1}. {set.topics[i]}</h2>
+              <span className="muted">{t(`${qs.length} ข้อ`, `${qs.length} questions`)}</span>
+            </div>
+            {set.cheatsheet?.[i]?.length > 0 && (
+              <ul className="card cheatsheet">{set.cheatsheet[i].map((line, k) => <li key={k}>{line}</li>)}</ul>
+            )}
+            {showKeys && (
+              <div className="stack-8">
+                <h3 className="label">{t('เฉลยย่อ', 'Answer key')}</h3>
+                <ol className="card arise-key">
+                  {qs.map((q) => <li key={q.id}><span>{q.stem}</span><b>{correct(q)}</b></li>)}
+                </ol>
+              </div>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }
