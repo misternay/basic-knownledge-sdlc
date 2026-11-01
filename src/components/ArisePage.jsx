@@ -283,11 +283,16 @@ function Feedback({ q, set, picked, result }) {
 
 // Chapter principles (authored from the set's answers and reasons) plus an
 // answer key built straight from the questions, so it can't drift from them.
+// Each chapter: an opening scene, grouped key → rule → trap items, a mnemonic.
+// Self-test mode hides rules until revealed; printing always shows everything.
 function Sheet({ set }) {
   const { t } = useI18n();
   const [chapter, setChapter] = useState('all');
   const [showKeys, setShowKeys] = useState(false);
+  const [selfTest, setSelfTest] = useState(false);
+  const [revealed, setRevealed] = useState(() => new Set());
   const chapters = set.topics.map((title, i) => i).filter((i) => chapter === 'all' || String(i) === chapter);
+  const reveal = (id) => setRevealed(new Set(revealed).add(id));
   const correct = (q) => q.answer.map((i) => q.choices[i]).join(q.type === 'order' ? ' → ' : ' + ');
   return (
     <div className="stack-24">
@@ -298,6 +303,10 @@ function Sheet({ set }) {
             <option value="all">{t('ทุกบท', 'All chapters')}</option>
             {set.topics.map((name, i) => <option key={i} value={String(i)}>{i + 1}. {name}</option>)}
           </select>
+        </label>
+        <label className="option arise-check">
+          <input type="checkbox" checked={selfTest} onChange={(e) => { setSelfTest(e.target.checked); setRevealed(new Set()); }} />
+          <span className="grow">{t('ทดสอบตัวเอง (ซ่อนคำอธิบาย)', 'Self-test (hide explanations)')}</span>
         </label>
         <label className="option arise-check">
           <input type="checkbox" checked={showKeys} onChange={(e) => setShowKeys(e.target.checked)} />
@@ -311,15 +320,36 @@ function Sheet({ set }) {
       )}</p>
       {chapters.map((i) => {
         const qs = set.questions.filter((q) => q.topics.includes(i));
+        const c = set.cheatsheet?.[i];
         return (
-          <section key={i} className="stack-12 arise-sheet">
+          <section key={i} className="stack-16 arise-sheet">
             <div className="tier-head">
               <h2 className="h2">{i + 1}. {set.topics[i]}</h2>
               <span className="muted">{t(`${qs.length} ข้อ`, `${qs.length} questions`)}</span>
             </div>
-            {set.cheatsheet?.[i]?.length > 0 && (
-              <ul className="card cheatsheet">{set.cheatsheet[i].map((line, k) => <li key={k}>{line}</li>)}</ul>
-            )}
+            {c && <p className="arise-story">{c.story}</p>}
+            {c?.groups.map((g, gi) => (
+              <div key={gi} className="stack-8">
+                <h3 className="h3">{g.title}</h3>
+                <ul className="arise-items">
+                  {g.items.map((it, k) => {
+                    const id = `${i}.${gi}.${k}`;
+                    const hidden = selfTest && !revealed.has(id);
+                    return (
+                      <li key={k} className={'arise-item' + (hidden ? ' concealed' : '')}>
+                        <b className="arise-term">{it.key}</b>
+                        {hidden && <button type="button" className="link self-start no-print" onClick={() => reveal(id)}>{t('นึกให้ได้ก่อน แล้วกดดู', 'Recall it first, then reveal')}</button>}
+                        <div className="arise-reveal stack-6">
+                          <span>{it.rule}</span>
+                          {it.trap && <span className="arise-trap"><b>{t('กับดัก: ', 'Trap: ')}</b>{it.trap}</span>}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+            {c?.mnemonic && <p className="arise-mnemonic"><span>{t('จำสั้น ๆ', 'In short')}</span>{c.mnemonic}</p>}
             {showKeys && (
               <div className="stack-8">
                 <h3 className="label">{t('เฉลยย่อ', 'Answer key')}</h3>

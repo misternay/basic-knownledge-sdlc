@@ -34,14 +34,18 @@ test('checkEdition catches broken answers and reasons', () => {
   assert.ok(checkEdition(edition([q({ reasons: ['x'] })])).length);
   assert.ok(checkEdition(edition([q({ type: 'order', answer: [0, 1] })])).length);
   assert.ok(checkEdition(edition([q(), q()])).some((e) => e.includes('duplicate')));
-  assert.deepEqual(checkEdition({ ...edition([q()]), cheatsheet: [['line']] }), []);
+  const chapter = { story: 's', mnemonic: '', groups: [{ title: 'g', items: [{ key: 'k', rule: 'r', trap: 't' }, { key: 'k2', rule: 'r2' }] }] };
+  assert.deepEqual(checkEdition({ ...edition([q()]), cheatsheet: [chapter] }), []);
   assert.ok(checkEdition({ ...edition([q()]), cheatsheet: [] }).length);
-  assert.ok(checkEdition({ ...edition([q()]), cheatsheet: [['']] }).length);
+  assert.ok(checkEdition({ ...edition([q()]), cheatsheet: [{ ...chapter, groups: [{ title: 'g', items: [{ key: 'k', rule: '' }] }] }] }).length);
 });
 
 test('checkParity requires matching ids and answers', () => {
   assert.deepEqual(checkParity(edition([q()]), edition([q({ stem: 'en' })])), []);
   assert.ok(checkParity(edition([q()]), edition([q({ answer: [2] })])).length);
+  const c = (trap) => ({ story: 's', mnemonic: '', groups: [{ title: 'g', items: [{ key: 'k', rule: 'r', ...(trap && { trap }) }] }] });
+  assert.deepEqual(checkParity({ ...edition([q()]), cheatsheet: [c('t')] }, { ...edition([q()]), cheatsheet: [c('trap')] }), []);
+  assert.ok(checkParity({ ...edition([q()]), cheatsheet: [c('t')] }, { ...edition([q()]), cheatsheet: [c()] }).length);
 });
 
 test('vault round trip, wrong passphrase fails', async () => {
